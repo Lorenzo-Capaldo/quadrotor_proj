@@ -2,30 +2,48 @@ clear all
 clc
 close all
 
-SIMTIME = 300;
-m = 0.68;
+% Sim params
+SIMTIME = 100;
+
+% Env params
 g = 9.81;
-L = 0.17;
-Kt = 5.4e-5;
-Kq = 1.1e-6;
-reference_area = pi * 75e-3^2;
-drag_coefficient = 0.47;
-kdx = 0.5*drag_coefficient*reference_area; kdy = kdx; kdz = kdx;
-Kd = [kdx;kdy;kdz];
+
+% Quad physical parameters
+m = 1.4; % Mass [m]
+L = 0.56; % Distance between center of mass and motor [m]
+Kd = 1.3858e-6; % Drag torque coeffecient (kg-m^2)
+
+kdx = 0.16481; % Translational drag force coeffecient (kg/s)
+kdy = 0.31892; % Translational drag force coeffecient (kg/s)
+kdz = 1.1e-6; % Translational drag force coeffecient (kg/s) = [kdx;kdy;kdz];
 drag_mat = [kdx 0 0; 0 kdy 0; 0 0 kdz];
-inertia_xx = 0.007;
-inertia_yy = 0.007;
-inertia_zz = 0.012;
-J = [inertia_xx; inertia_yy; inertia_zz]; % Body inertia
-Jr = 8.54858e-06;
+
+inertia_xx = 0.05; % Moment of inertia about X axis (kg-m^2)
+inertia_yy = 0.05; % Moment of inertia about Y axis (kg-m^2)
+inertia_zz = 0.24; % Moment of inertia about Z axis (kg-m^2)
+J = [inertia_xx; inertia_yy; inertia_zz]; % Body inertia [kg-m^2]
+
+% Motor parameters
+Kt = 1.3328e-5; % Thrust force coeffecient (kg-m)
+Jr = 0.044; % Moment of Intertia of the rotor (kg-m^2)
 Gamma = [Kt Kt Kt Kt;
          0 -L*Kt 0 L*Kt;
          L*Kt 0 -L*Kt 0;
-         Kq -Kq Kq -Kq];
+         Kd -Kd Kd -Kd];
 Gamma_inv = inv(Gamma);
 mot_speeds = [1 -1 1 -1]';
-max_mot_speeds = ones(4,1).*[300;300;300;300].*mot_speeds;
-max_torques = Gamma*(max_mot_speeds).^2;
+max_mot_speeds = 925; % motors upper limit (rad/s)
+min_mot_speeds = 0; % motors lower limit (can't spin in reverse)
+
+U_max = [4*Kt*max_mot_speeds^2; 
+         Kt*L*max_mot_speeds^2;
+         Kt*L*max_mot_speeds^2;
+         2*Kd*max_mot_speeds^2];
+U_min = [                    0;
+         Kt*L*max_mot_speeds^2;
+         Kt*L*max_mot_speeds^2;
+         2*Kd*max_mot_speeds^2];
+%%
 
 %Linearize at hover 
 % x y z u v r phi theta psi p q r
